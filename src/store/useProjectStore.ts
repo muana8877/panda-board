@@ -11,7 +11,8 @@ type ProjectState = {
     deleteProject: (id: string) => void;
 
     // Task management
-    addTask: (projectId: string, title: string, description?: string) => Task | undefined;
+    // addTask: (projectId: string, title: string, description?: string) => Task | undefined;
+    addTask: (projectId: string, title: string, status: TaskStatus, description?: string) => Task | undefined;
     updateTask: (projectId: string, taskId: string, data: Partial<Task>) => void;
     deleteTask: (projectId: string, taskId: string) => void;
 }
@@ -41,15 +42,30 @@ export const useProjectStore = create<ProjectState>()(
             },
 
                   // tasks
-            addTask: (projectId, title, description = '') => {
-                const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-                const task: Task = { id, title, description, status: 'todo' as TaskStatus, createdAt: Date.now() };
-                set(state => ({
-                projects: state.projects.map(p => (p.id === projectId ? { ...p, tasks: [...p.tasks, task] } : p)),
+            addTask: (projectId, title, status: TaskStatus, description = '') => {
+                const id =
+                    typeof crypto !== 'undefined' && crypto.randomUUID
+                    ? crypto.randomUUID()
+                    : `${Date.now()}-${Math.random()}`;
+
+                const task: Task = {
+                    id,
+                    title,
+                    description,
+                    status, // 👈 use status passed from Column
+                    createdAt: Date.now(),
+                };
+
+                set((state) => ({
+                    projects: state.projects.map((p) =>
+                    p.id === projectId ? { ...p, tasks: [...p.tasks, task] } : p
+                    ),
                 }));
-                const project = get().projects.find(p => p.id === projectId);
+
+                const project = get().projects.find((p) => p.id === projectId);
                 return project?.tasks.slice(-1)[0];
-            },
+                },
+
 
             updateTask: (projectId, taskId, data) => {
                 set(state => ({
