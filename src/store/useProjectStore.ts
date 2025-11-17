@@ -1,92 +1,117 @@
-// Zustand Store for managing project state
-
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import { Project, Task, TaskStatus } from '@/types';
+// src/store/useProjectStore.ts
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import type { Project, Task, Column } from "@/types";
 
 type ProjectState = {
-    projects: Project[];
-    createProject: (title: string) => Project;
-    updateProject: (id: string, data: Partial<Project>) => void;
-    deleteProject: (id: string) => void;
+  projects: Project[];
 
-    // Task management
-    // addTask: (projectId: string, title: string, description?: string) => Task | undefined;
-    addTask: (projectId: string, title: string, status: TaskStatus, description?: string) => Task | undefined;
-    updateTask: (projectId: string, taskId: string, data: Partial<Task>) => void;
-    deleteTask: (projectId: string, taskId: string) => void;
+  // projects
+  createProject: (title: string) => Project;
+  updateProject: (id: string, data: Partial<Project>) => void;
+  deleteProject: (id: string) => void;
+
+  // columns (per-project)
+  addColumn: (projectId: string, title: string, color?: string) => Column | undefined;
+  renameColumn: (projectId: string, columnId: string, newTitle: string) => void;
+  deleteColumn: (projectId: string, columnId: string) => void;
+
+  // tasks
+  addTask: (projectId: string, title: string, columnId: string, description?: string) => Task | undefined;
+  updateTask: (projectId: string, taskId: string, data: Partial<Task>) => void;
+  deleteTask: (projectId: string, taskId: string) => void;
+};
+
+function genId(prefix = "") {
+  return typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${prefix}${Date.now()}-${Math.random()}`;
 }
 
 export const useProjectStore = create<ProjectState>()(
-    persist(
-        (set, get) => ({
-            projects: [],
+  persist(
+    (set, get) => ({
+      projects: [],
 
-            createProject: (title: string) => {
-                const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-                const newProject: Project = {id, title, createdAt: Date.now(), tasks: []};
-                set(state => ({ projects: [...state.projects, newProject] }));
-                return newProject;
-            },
+      // CREATE project with default 3 columns
+      createProject: (title: string) => {
+        const id = genId("project-");
+        const now = Date.now();
+        const defaultCols: Column[] = [
+          { id: genId("col-"), title: "Backlog", color: "bg-neutral-200", createdAt: now },
+          { id: genId("col-"), title: "Todo", color: "bg-yellow-200", createdAt: now },
+          { id: genId("col-"), title: "Done", color: "bg-emerald-200", createdAt: now },
+        ];
+        const newProject: Project = { id, title, createdAt: now, columns: defaultCols, tasks: [] };
+        set((s) => ({ projects: [...s.projects, newProject] }));
+        return newProject;
+      },
 
-            updateProject: (id, data) =>{
-                set(state => ({
-                    projects: state.projects.map(p => p.id === id ? {...p, ...data} : p)
-                }))
-            },
+      updateProject: (id, data) => {
+        set((s) => ({ projects: s.projects.map((p) => (p.id === id ? { ...p, ...data } : p)) }));
+      },
 
-            deleteProject: id =>{
-                set(state => ({
-                    projects: state.projects.filter(p => p.id !== id)
-                }))
-            },
+      deleteProject: (id) => {
+        set((s) => ({ projects: s.projects.filter((p) => p.id !== id) }));
+      },
 
-                  // tasks
-            addTask: (projectId, title, status: TaskStatus, description = '') => {
-                const id =
-                    typeof crypto !== 'undefined' && crypto.randomUUID
-                    ? crypto.randomUUID()
-                    : `${Date.now()}-${Math.random()}`;
+      // Columns
+      addColumn: (projectId, title, color = "bg-neutral-200") => {
+        const id = genId("col-");
+        const col: Column = { id, title, color, createdAt: Date.now() };
+        set((s) => ({
+          projects: s.projects.map((p) => (p.id === projectId ? { ...p, columns: [...p.columns, col] } : p)),
+        }));
+        const project = get().projects.find((p) => p.id === projectId);
+        return project?.columns.slice(-1)[0];
+      },
 
-                const task: Task = {
-                    id,
-                    title,
-                    description,
-                    status, // 👈 use status passed from Column
-                    createdAt: Date.now(),
-                };
+      renameColumn: (projectId, columnId, newTitle) => {
+        set((s) => ({
+          projects: s.projects.map((p) =>
+            p.id === projectId ? { ...p, columns: p.columns.map((c) => (c.id === columnId ? { ...c, title: newTitle } : c)) } : p
+          ),
+        }));
+      },
 
-                set((state) => ({
-                    projects: state.projects.map((p) =>
-                    p.id === projectId ? { ...p, tasks: [...p.tasks, task] } : p
-                    ),
-                }));
+      // Delete a column AND remove tasks that belonged to it
+      deleteColumn: (projectId, columnId) => {
+        set((s) => ({
+          projects: s.projects.map((p) => {
+            if (p.id !== projectId) return p;
+            const nextCols = p.columns.filter((c) => c.id !== columnId);
+            const nextTasks = p.tasks.filter((t) => t.columnId !== columnId); // remove tasks in that column
+            return { ...p, columns: nextCols, tasks: nextTasks };
+          }),
+        }));
+      },
 
-                const project = get().projects.find((p) => p.id === projectId);
-                return project?.tasks.slice(-1)[0];
-                },
+      // Tasks
+      addTask: (projectId, title, columnId, description = "") => {
+        const id = genId("task-");
+        const task: Task = { id, title, description, columnId, createdAt: Date.now() };
+        set((s) => ({
+          projects: s.projects.map((p) => (p.id === projectId ? { ...p, tasks: [...p.tasks, task] } : p)),
+        }));
+        const project = get().projects.find((p) => p.id === projectId);
+        return project?.tasks.slice(-1)[0];
+      },
 
+      updateTask: (projectId, taskId, data) => {
+        set((s) => ({
+          projects: s.projects.map((p) =>
+            p.id === projectId ? { ...p, tasks: p.tasks.map((t) => (t.id === taskId ? { ...t, ...data } : t)) } : p
+          ),
+        }));
+      },
 
-            updateTask: (projectId, taskId, data) => {
-                set(state => ({
-                projects: state.projects.map(p =>
-                    p.id === projectId
-                    ? { ...p, tasks: p.tasks.map(t => (t.id === taskId ? { ...t, ...data } : t)) }
-                    : p
-                ),
-                }));
-            },
-
-            deleteTask: (projectId, taskId) => {
-                set(state => ({
-                projects: state.projects.map(p => (p.id === projectId ? { ...p, tasks: p.tasks.filter(t => t.id !== taskId) } : p)),
-                }));
-            },
-        }),
-
-        {
-            name: 'panda-board-projects', // unique name
-            storage: createJSONStorage(() => localStorage),
-        }
-    )
+      deleteTask: (projectId, taskId) => {
+        set((s) => ({
+          projects: s.projects.map((p) => (p.id === projectId ? { ...p, tasks: p.tasks.filter((t) => t.id !== taskId) } : p)),
+        }));
+      },
+    }),
+    {
+      name: "panda-board-projects",
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
 );

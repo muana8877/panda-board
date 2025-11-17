@@ -1,35 +1,34 @@
 // src/components/ProjectBoard/Column.tsx
 import React, { useState } from "react";
 import TaskCard from "./TaskCard";
-import type { Task, TaskStatus } from "@/types"; // if you have Task type
+import type { Task } from "@/types";
 
 type ColumnProps = {
   title: string;
-  color: string;
-  column: TaskStatus;
+  color?: string;
+  columnId: string;
   tasks: Task[] | any[];
   projectId: string;
   updateTask: (projectId: string, taskId: string, data: any) => void;
-  addTask: (projectId: string, title: string, status: TaskStatus, description?: string) => void;
+  addTask: (projectId: string, title: string, columnId: string, description?: string) => void;
 };
 
-const Column = ({ title, color, column, tasks, projectId, updateTask, addTask }: ColumnProps) => {
+const Column = ({ title, color, columnId, tasks, projectId, updateTask, addTask }: ColumnProps) => {
   const [active, setActive] = useState(false);
   const [newTitle, setNewTitle] = useState("");
-  const filtered = tasks.filter((t) => t.status === column);
+  const filtered = tasks.filter((t) => t.columnId === columnId);
 
-  // Use React.DragEvent for proper typing
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const taskId = e.dataTransfer?.getData("taskId");
     if (!taskId) return;
-    updateTask(projectId, taskId, { status: column });
+    updateTask(projectId, taskId, { columnId });
     setActive(false);
   };
 
   return (
     <div
-      onDragOver={(e: React.DragEvent<HTMLDivElement>) => {
+      onDragOver={(e) => {
         e.preventDefault();
         setActive(true);
       }}
@@ -38,7 +37,7 @@ const Column = ({ title, color, column, tasks, projectId, updateTask, addTask }:
       className={`w-64 flex-shrink-0 rounded-lg p-3 transition-colors ${active ? "bg-neutral-800/50" : "bg-neutral-800/20"}`}
     >
       <div className="mb-2 flex items-center justify-between">
-        <h3 className={`font-medium ${color}`}>{title}</h3>
+        <h3 className={`font-medium ${color || ""}`}>{title}</h3>
         <span className="text-sm text-neutral-400">{filtered.length}</span>
       </div>
 
@@ -52,7 +51,7 @@ const Column = ({ title, color, column, tasks, projectId, updateTask, addTask }:
         onSubmit={(e) => {
           e.preventDefault();
           if (newTitle.trim()) {
-            addTask(projectId, newTitle.trim(), column);
+            addTask(projectId, newTitle.trim(), columnId);
             setNewTitle("");
           }
         }}

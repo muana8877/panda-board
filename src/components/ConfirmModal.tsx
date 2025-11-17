@@ -1,5 +1,13 @@
-// src/components/ProjectBoard/ConfirmModal.tsx
 import React from "react";
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title?: string;
+  description?: string;
+  children?: React.ReactNode; // ✅ added this line
+};
 
 export default function ConfirmModal({
   open,
@@ -7,31 +15,31 @@ export default function ConfirmModal({
   onConfirm,
   title,
   description,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  title?: string;
-  description?: string;
-}) {
+  children, // ✅ add children in destructuring
+}: Props) {
   if (!open) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="bg-white rounded p-6 z-10 max-w-sm w-full text-black">
-        <h3 className="text-lg font-semibold">{title || "Confirm"}</h3>
-        {description && <p className="mt-2 text-sm text-gray-600">{description}</p>}
-        <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onClose} className="px-3 py-1 rounded border">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="bg-white text-black rounded-lg shadow-lg w-80 p-4">
+        {title && <h2 className="font-bold text-lg mb-2">{title}</h2>}
+        {description && <p className="text-sm text-gray-600 mb-4">{description}</p>}
+
+        {/* ✅ render children if any */}
+        {children && <div className="mb-4">{children}</div>}
+
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-3 py-1 rounded border border-gray-300"
+          >
             Cancel
           </button>
           <button
-            onClick={() => {
-              onConfirm();
-            }}
+            onClick={onConfirm}
             className="px-3 py-1 rounded bg-red-600 text-white"
           >
-            Delete
+            Confirm
           </button>
         </div>
       </div>
