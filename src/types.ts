@@ -1,5 +1,12 @@
 export type TaskStatus = string;
 
+export type Subtask = {
+    id: string;
+    title: string;
+    completed: boolean;
+    createdAt: number;
+};
+
 export type Task = {
     id: string;
     title: string;
@@ -7,6 +14,7 @@ export type Task = {
     columnId: string; 
     createdAt: number;
     dueDate?:string | null;
+    subtasks?: Subtask[];
 };
 
 export type Column = {

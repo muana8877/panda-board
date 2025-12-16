@@ -1,7 +1,7 @@
 // src/store/useProjectStore.ts
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { Project, Task, Column } from "@/types";
+import type { Project, Task, Column, Subtask } from "@/types";
 
 type ProjectState = {
   projects: Project[];
@@ -20,6 +20,11 @@ type ProjectState = {
   addTask: (projectId: string, title: string, columnId: string, description?: string) => Task | undefined;
   updateTask: (projectId: string, taskId: string, data: Partial<Task>) => void;
   deleteTask: (projectId: string, taskId: string) => void;
+
+  // subtasks
+  addSubtask: (projectId: string, taskId: string, title: string) => Subtask | undefined;
+  toggleSubtask: (projectId: string, taskId: string, subtaskId: string) => void;
+  deleteSubtask: (projectId: string, taskId: string, subtaskId: string) => void;
 };
 
 function genId(prefix = "") {
@@ -87,7 +92,7 @@ export const useProjectStore = create<ProjectState>()(
       // Tasks
       addTask: (projectId, title, columnId, description = "") => {
         const id = genId("task-");
-        const task: Task = { id, title, description, columnId, createdAt: Date.now() };
+        const task: Task = { id, title, description, columnId, createdAt: Date.now(), subtasks: [] };
         set((s) => ({
           projects: s.projects.map((p) => (p.id === projectId ? { ...p, tasks: [...p.tasks, task] } : p)),
         }));
@@ -106,6 +111,69 @@ export const useProjectStore = create<ProjectState>()(
       deleteTask: (projectId, taskId) => {
         set((s) => ({
           projects: s.projects.map((p) => (p.id === projectId ? { ...p, tasks: p.tasks.filter((t) => t.id !== taskId) } : p)),
+        }));
+      },
+
+      // Subtasks
+      addSubtask: (projectId, taskId, title) => {
+        const subtaskId = genId("subtask-");
+        const subtask: Subtask = { id: subtaskId, title, completed: false, createdAt: Date.now() };
+        set((s) => ({
+          projects: s.projects.map((p) =>
+            p.id === projectId
+              ? {
+                  ...p,
+                  tasks: p.tasks.map((t) =>
+                    t.id === taskId ? { ...t, subtasks: [...(t.subtasks || []), subtask] } : t
+                  ),
+                }
+              : p
+          ),
+        }));
+        const project = get().projects.find((p) => p.id === projectId);
+        const task = project?.tasks.find((t) => t.id === taskId);
+        return task?.subtasks?.slice(-1)[0];
+      },
+
+      toggleSubtask: (projectId, taskId, subtaskId) => {
+        set((s) => ({
+          projects: s.projects.map((p) =>
+            p.id === projectId
+              ? {
+                  ...p,
+                  tasks: p.tasks.map((t) =>
+                    t.id === taskId
+                      ? {
+                          ...t,
+                          subtasks: (t.subtasks || []).map((st) =>
+                            st.id === subtaskId ? { ...st, completed: !st.completed } : st
+                          ),
+                        }
+                      : t
+                  ),
+                }
+              : p
+          ),
+        }));
+      },
+
+      deleteSubtask: (projectId, taskId, subtaskId) => {
+        set((s) => ({
+          projects: s.projects.map((p) =>
+            p.id === projectId
+              ? {
+                  ...p,
+                  tasks: p.tasks.map((t) =>
+                    t.id === taskId
+                      ? {
+                          ...t,
+                          subtasks: (t.subtasks || []).filter((st) => st.id !== subtaskId),
+                        }
+                      : t
+                  ),
+                }
+              : p
+          ),
         }));
       },
     }),
