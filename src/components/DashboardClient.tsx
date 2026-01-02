@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useProjectStore } from '@/store/useProjectStore';
 import { Project } from '@/types';
 import AnimatedBackground from './AnimatedBackground';
+import ConfirmModal from './ConfirmModal';
 
 function ProjectCard({
   project,
@@ -191,6 +192,7 @@ export default function DashboardClient() {
 
   const [showModal, setShowModal] = useState(false);
   const [title, setTitle] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
 
   const openProject = (id: string) => {
     router.push(`/projects/${id}`);
@@ -364,7 +366,7 @@ export default function DashboardClient() {
                         key={p.id}
                         project={p}
                         onOpen={openProject}
-                        onDelete={deleteProject}
+                        onDelete={(id) => setDeleteTarget({ id, title: p.title })}
                         index={index}
                       />
                     ))}
@@ -457,6 +459,23 @@ export default function DashboardClient() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Delete Project Confirmation Modal */}
+      <ConfirmModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteProject(deleteTarget.id);
+            setDeleteTarget(null);
+          }
+        }}
+        title="Delete Project?"
+        description={`Are you sure you want to delete "${deleteTarget?.title}"? This will permanently remove the project and all its tasks.`}
+        confirmText="Delete Project"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </div>
   );
 }

@@ -382,7 +382,10 @@ const TaskDetail = ({ task, onClose, updateTask, deleteTask, projectId }: TaskDe
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={handleSave}
+                onClick={() => {
+                  handleSave();
+                  onClose();
+                }}
                 className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
