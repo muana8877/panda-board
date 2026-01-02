@@ -10,7 +10,8 @@ export async function POST(request: Request) {
 
     const subtasks = await generateSubtasksWithAI(title, description);
     return NextResponse.json({ subtasks });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Failed to generate subtasks" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to generate subtasks";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

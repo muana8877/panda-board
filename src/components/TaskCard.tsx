@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import type { Task } from "@/types";
 
@@ -8,24 +8,35 @@ interface TaskCardProps {
 }
 
 const TaskCard = ({ task, onSelect }: TaskCardProps) => {
+  const cardRef = useRef<HTMLDivElement>(null);
   const completedSubtasks = (task.subtasks || []).filter(st => st.completed).length;
   const totalSubtasks = (task.subtasks || []).length;
   const hasSubtasks = totalSubtasks > 0;
   const progress = hasSubtasks ? (completedSubtasks / totalSubtasks) * 100 : 0;
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
-    e.dataTransfer.setData("taskId", task.id);
-    e.dataTransfer.effectAllowed = "move";
-  };
+  useEffect(() => {
+    const element = cardRef.current;
+    if (!element) return;
+
+    const handleDragStart = (e: DragEvent) => {
+      if (e.dataTransfer) {
+        e.dataTransfer.setData("taskId", task.id);
+        e.dataTransfer.effectAllowed = "move";
+      }
+    };
+
+    element.addEventListener("dragstart", handleDragStart);
+    return () => element.removeEventListener("dragstart", handleDragStart);
+  }, [task.id]);
 
   return (
     <motion.div
+      ref={cardRef}
       whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}
       className="group relative bg-white/5 backdrop-blur-md border border-white/10 hover:border-purple-500/40 rounded-xl p-4 text-white cursor-pointer transition-all duration-300 overflow-hidden"
       onClick={onSelect}
       draggable
-      onDragStart={handleDragStart as any}
     >
       {/* Animated gradient border on hover */}
       <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">

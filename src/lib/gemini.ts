@@ -21,7 +21,7 @@ async function tryGenerateWithModel(modelName: string, prompt: string) {
     const model = genAI.getGenerativeModel({ model: modelName });
     const result = await model.generateContent(prompt);
     return result.response.text();
-  } catch (err: any) {
+  } catch (err: unknown) {
     // If the model isn't supported or not found, some APIs return 404 or specific messages.
     // Surface the error so caller can decide to try the next candidate.
     throw err;
@@ -56,7 +56,7 @@ Guidelines:
 - Do not include explanations or additional text`;
 
   // Try candidate models in order and return the first successful parse
-  let lastErr: any = null;
+  let lastErr: unknown = null;
   for (const modelName of CANDIDATE_MODELS) {
     try {
       const text = await tryGenerateWithModel(modelName, prompt);
@@ -72,7 +72,7 @@ Guidelines:
       }
 
       return subtasks;
-    } catch (err: any) {
+    } catch (err: unknown) {
       lastErr = err;
       // try next model
       continue;

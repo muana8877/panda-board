@@ -7,7 +7,7 @@ import ConfirmModal from "./ConfirmModal";
 interface TaskDetailProps {
   task: Task | null;
   onClose: () => void;
-  updateTask: (projectId: string, taskId: string, data: any) => void;
+  updateTask: (projectId: string, taskId: string, data: Partial<Task>) => void;
   deleteTask: (projectId: string, taskId: string) => void;
   projectId: string;
 }

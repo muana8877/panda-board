@@ -8,9 +8,9 @@ type ColumnProps = {
   color?: string;
   columnId: string;
   columnIndex?: number;
-  tasks: Task[] | any[];
+  tasks: Task[];
   projectId: string;
-  updateTask: (projectId: string, taskId: string, data: any) => void;
+  updateTask: (projectId: string, taskId: string, data: Partial<Task>) => void;
   addTask: (projectId: string, title: string, columnId: string, description?: string) => void;
   selectedTaskId: (taskId: string) => void;
   setDeleteColTarget: (id: string) => void;
