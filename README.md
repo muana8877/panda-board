@@ -47,21 +47,6 @@ PandaBoard delivers a smooth, Trello-like experience with a high-end aesthetic, 
 
 ---
 
-## 📁 Project Structure
-
-```text
-src/
-├── app/                 # Next.js App Router pages & layouts
-├── components/          # React components (UI & Logic)
-│   ├── AnimatedBackground.tsx
-│   ├── ProjectBoard.tsx
-│   ├── TaskCard.tsx
-│   └── TaskDetail.tsx
-├── store/               # Zustand store for state management
-├── lib/                 # Utilities (Gemini API config)
-└── types.ts             # TypeScript interfaces
-```
-
 ## 🙌 Author
 
 Built with ❤️ by Mahnoor
